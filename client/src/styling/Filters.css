@@ -1,0 +1,59 @@
+.filters-container {
+  background-color: #fff; /* خلفية بيضاء عشان تظهر فوق الـ main-color */
+  padding: 20px 0;
+  border-bottom: 1px solid #ddd;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.filters-container .container {
+  display: flex;
+  flex-wrap: wrap; /* عشان في الموبايل ينزلوا تحت بعض */
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1; /* عشان ياخدوا مساحات متساوية */
+  min-width: 150px;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--alt-color);
+}
+
+.filter-group select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: "Cairo", sans-serif;
+  outline: none;
+  background-color: var(--main-color);
+}
+
+.reset-btn {
+  padding: 10px 20px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: "Cairo", sans-serif;
+  transition: var(--main-transition);
+}
+
+.reset-btn:hover {
+  background-color: #c0392b;
+}
+
+/* للموبايل */
+@media (max-width: 768px) {
+  .filters-container .container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,107 @@
+:root {
+  --main-color: #fcf6f5;
+  --alt-color: #7b9acc;
+  --main-transition: 0.3s;
+}
+
+* {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: "Cairo", sans-serif;
+}
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+a {
+  text-decoration: none;
+}
+.container {
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Small Screens */
+@media (min-width: 768px) {
+  .container {
+    width: 750px;
+  }
+}
+
+/* Medium Screens */
+@media (min-width: 992px) {
+  .container {
+    width: 970px;
+  }
+}
+
+/* Large Screens */
+@media (min-width: 1200px) {
+  .container {
+    width: 1170px;
+  }
+}
+.header {
+  margin: 0;
+  width: 100%;
+  min-height: 100px;
+  background-color: var(--main-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* إضافة لمسة جمالية */
+  position: sticky; /* يفضل يكون ثابت فوق وأنت بتعمل سكرول */
+  top: 0;
+  z-index: 1000;
+}
+.header .container {
+  display: flex;
+  justify-content: space-between; /* اللوجو يمين والسيرش شمال أو العكس */
+  align-items: center;
+  width: 100%;
+}
+
+.header h1 {
+  color: var(--alt-color);
+  font-size: 1.8rem;
+  letter-spacing: 1px; /* بيخلي شكل الخط "Cairo" أرقى */
+}
+
+.search-box input {
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid var(--alt-color);
+  outline: none;
+}
+.search-box button {
+  padding: 8px 15px;
+  background-color: var(--alt-color);
+  color: white;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  margin-left: 5px;
+}
+@media (max-width: 767px) {
+  .search-box button {
+    margin-top: 5px;
+  }
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 25px;
+  padding: 40px 0;
+}
