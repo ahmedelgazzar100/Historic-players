@@ -27,12 +27,13 @@
 .player-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* بيخلي الصورة تملا المكان من غير ما تتمط */
+  object-fit: cover;
+  /* object-position: top; */
   transition: transform 0.5s ease;
 }
 
 .player-card:hover .player-image {
-  transform: scale(1.1); /* زووم بسيط للصورة عند الهوفر */
+  transform: scale(1.1);
 }
 
 .player-info {
@@ -49,4 +50,14 @@
 
 .player-card:hover .player-info h3 {
   color: var(--alt-color);
+}
+
+@media (max-width: 767px) {
+  .player-image-wrapper {
+    height: 500px;
+  }
+
+  .player-info h3 {
+    font-size: 1.1rem;
+  }
 }

@@ -1,12 +1,46 @@
-import "../styling/Filters.css"; // لو حابب تفصل الاستايل
+import "../styling/Filters.css";
+import { useEffect, useState } from "react";
+import axios from "axios";
+const Filters = (props) => {
+  const [countries, setCountries] = useState([]);
+  // const [filter, setFilter] = useState({
+  //   country: "",
+  //   pos: "",
+  // });
 
-const Filters = () => {
+  useEffect(() => {
+    async function getCountries() {
+      try {
+        const response = await axios.get("http://localhost:5000/getcountries");
+        const data = response.data;
+        setCountries(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    getCountries();
+  }, []);
+
+  const [filter, setFilter] = useState({
+    country: "",
+    pos: "",
+  });
+  function handleChange(event) {
+    const { name, value } = event.target;
+    const updatedFilter = {
+      ...filter,
+      [name]: value,
+    };
+    setFilter(updatedFilter);
+    props.onFilter(updatedFilter);
+  }
+
   return (
     <div className="filters-container">
       <div className="container">
         <div className="filter-group">
           <label>position</label>
-          <select>
+          <select name="pos" onChange={handleChange}>
             <option value="">All Positions</option>
             <optgroup label="Attackers (الهجوم)">
               <option value="ST">ST (Striker - مهاجم صريح)</option>
@@ -44,11 +78,13 @@ const Filters = () => {
 
         <div className="filter-group">
           <label>الجنسية</label>
-          <select>
-            <option value="">كل الجنسيات</option>
-            <option value="brazil">البرازيل</option>
-            <option value="argentina">الأرجنتين</option>
-            {/* ... الخ */}
+          <select name="country" onChange={handleChange}>
+            <option value="">All nationalities</option>
+            {countries.map((item, index) => (
+              <option value={item.country} key={index}>
+                {item.country}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -56,9 +92,6 @@ const Filters = () => {
           <label>النادي/الفريق</label>
           <select>
             <option value="">كل الأندية</option>
-            <option value="real-madrid">ريال مدريد</option>
-            <option value="milan">ميلان</option>
-            {/* ... الخ */}
           </select>
         </div>
 

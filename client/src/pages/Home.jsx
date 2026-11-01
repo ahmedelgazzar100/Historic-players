@@ -18,11 +18,26 @@ export default function Home() {
     }
     getPlayers();
   }, []);
-  console.log(cards);
+
+  async function handleFilter(filter) {
+    console.log(filter);
+    try {
+      const response = await axios.get("http://localhost:5000/filter", {
+        params: {
+          country: filter.country,
+          position: filter.pos,
+        },
+        withCredentials: true,
+      });
+      setCards(response.data);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   return (
     <>
-      <Filters />
+      <Filters onFilter={handleFilter} />
       <div className="players-grid">
         {cards.map((player, index) => {
           return <PlayerCard name={player.name} img={player.img} key={index} />;

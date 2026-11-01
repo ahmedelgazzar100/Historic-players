@@ -29,7 +29,42 @@ app.get("/", async (req, res) => {
   let result = await db.query("select * from players");
   result = result.rows;
   res.status(200).json(result);
-  console.log(result);
+});
+
+app.get("/getcountries", async (req, res) => {
+  let result = await db.query("select country from players");
+  result = result.rows;
+  res.status(200).json(result);
+});
+
+app.get("/filter", async (req, res) => {
+  const { country, position } = req.query;
+
+  let query = "SELECT * FROM players WHERE 1=1";
+  let queryParams = [];
+  let index = 1;
+
+  if (country) {
+    query += ` AND country = $${index}`;
+    queryParams.push(country);
+    index++;
+  }
+
+  // لو المستخدم اختار مركز، بنزوده للبحث
+  if (position) {
+    query += ` AND position = $${index}`;
+    queryParams.push(position);
+    index++;
+  }
+
+  try {
+    let result = await db.query(query, queryParams);
+    console.log(result.rows);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 app.listen(5000, () => {
