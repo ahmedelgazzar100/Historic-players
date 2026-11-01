@@ -10,6 +10,7 @@ import env from "dotenv";
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 env.config();
 
 const db = new pg.Client({
@@ -24,8 +25,11 @@ db.connect();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.send("Server is running!");
+app.get("/", async (req, res) => {
+  let result = await db.query("select * from players");
+  result = result.rows;
+  res.status(200).json(result);
+  console.log(result);
 });
 
 app.listen(5000, () => {
