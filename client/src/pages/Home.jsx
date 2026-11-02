@@ -21,9 +21,11 @@ export default function Home() {
   }, []);
 
   async function handleFilter(filter) {
+    console.log(filter);
     try {
       const response = await axios.get("http://localhost:5000/filter", {
         params: {
+          club: filter.club,
           country: filter.country,
           position: filter.pos,
         },

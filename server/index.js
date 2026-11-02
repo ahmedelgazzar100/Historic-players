@@ -38,28 +38,39 @@ app.get("/getcountries", async (req, res) => {
 });
 
 app.get("/filter", async (req, res) => {
-  const { country, position } = req.query;
+  const { country, position, club } = req.query;
 
-  let query = "SELECT * FROM players WHERE 1=1";
+  let query = `
+    SELECT DISTINCT players.* 
+    FROM players 
+     JOIN player_teams ON players.id = player_teams.player_id 
+     JOIN teams ON player_teams.team_id = teams.id 
+    WHERE 1=1
+  `; //join now u have new table u can add query to search
+
   let queryParams = [];
   let index = 1;
 
   if (country) {
-    query += ` AND country = $${index}`;
+    query += ` AND players.country = $${index}`;
     queryParams.push(country);
     index++;
   }
 
-  // لو المستخدم اختار مركز، بنزوده للبحث
   if (position) {
-    query += ` AND $${index} = ANY(position)`;
+    query += ` AND $${index} = ANY(players.position)`;
     queryParams.push(position);
+    index++;
+  }
+
+  if (club) {
+    query += ` AND teams.team_name = $${index}`;
+    queryParams.push(club);
     index++;
   }
 
   try {
     let result = await db.query(query, queryParams);
-    console.log(result.rows);
     res.status(200).json(result.rows);
   } catch (error) {
     console.log("error", error);
