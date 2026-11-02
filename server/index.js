@@ -32,7 +32,7 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/getcountries", async (req, res) => {
-  let result = await db.query("select country from players");
+  let result = await db.query("select  DISTINCT  country from players");
   result = result.rows;
   res.status(200).json(result);
 });
@@ -52,7 +52,7 @@ app.get("/filter", async (req, res) => {
 
   // لو المستخدم اختار مركز، بنزوده للبحث
   if (position) {
-    query += ` AND position = $${index}`;
+    query += ` AND $${index} = ANY(position)`;
     queryParams.push(position);
     index++;
   }
@@ -64,6 +64,29 @@ app.get("/filter", async (req, res) => {
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.get("/filterName", async (req, res) => {
+  const { name } = req.query;
+  try {
+    let result = await db.query("select * from players where name Ilike ($1)", [
+      `%${name}%`,
+    ]);
+    result = result.rows;
+    res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+app.get("/getTeams", async (req, res) => {
+  try {
+    const response = await db.query("select * from teams");
+    res.status(200).json(response.rows);
+  } catch (err) {
+    console.log(err);
   }
 });
 

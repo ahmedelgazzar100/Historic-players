@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 const Filters = (props) => {
   const [countries, setCountries] = useState([]);
-  // const [filter, setFilter] = useState({
-  //   country: "",
-  //   pos: "",
-  // });
+  const [teams, setTeams] = useState([]);
 
   useEffect(() => {
     async function getCountries() {
@@ -21,10 +18,25 @@ const Filters = (props) => {
     getCountries();
   }, []);
 
+  useEffect(() => {
+    async function getTeams() {
+      try {
+        const response = await axios.get("http://localhost:5000/getTeams");
+        const data = response.data;
+        setTeams(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    getTeams();
+  }, []);
+
   const [filter, setFilter] = useState({
+    club: "",
     country: "",
     pos: "",
   });
+
   function handleChange(event) {
     const { name, value } = event.target;
     const updatedFilter = {
@@ -35,12 +47,22 @@ const Filters = (props) => {
     props.onFilter(updatedFilter);
   }
 
+  function handleReset() {
+    const clearedFilter = {
+      club: "",
+      country: "",
+      pos: "",
+    };
+    setFilter(clearedFilter);
+    props.onFilter(clearedFilter);
+  }
+
   return (
     <div className="filters-container">
       <div className="container">
         <div className="filter-group">
           <label>position</label>
-          <select name="pos" onChange={handleChange}>
+          <select name="pos" onChange={handleChange} value={filter.pos}>
             <option value="">All Positions</option>
             <optgroup label="Attackers (الهجوم)">
               <option value="ST">ST (Striker - مهاجم صريح)</option>
@@ -78,7 +100,7 @@ const Filters = (props) => {
 
         <div className="filter-group">
           <label>الجنسية</label>
-          <select name="country" onChange={handleChange}>
+          <select name="country" onChange={handleChange} value={filter.country}>
             <option value="">All nationalities</option>
             {countries.map((item, index) => (
               <option value={item.country} key={index}>
@@ -90,12 +112,19 @@ const Filters = (props) => {
 
         <div className="filter-group">
           <label>النادي/الفريق</label>
-          <select>
-            <option value="">كل الأندية</option>
+          <select onChange={handleChange} name="club" value={filter.club}>
+            <option value="">All clubs</option>
+            {teams.map((item, index) => (
+              <option value={item.team_name} key={index}>
+                {item.team_name}
+              </option>
+            ))}
           </select>
         </div>
 
-        <button className="reset-btn">إعادة ضبط</button>
+        <button className="reset-btn" onClick={handleReset}>
+          Reset
+        </button>
       </div>
     </div>
   );
