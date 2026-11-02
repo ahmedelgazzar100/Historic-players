@@ -25,6 +25,49 @@ db.connect();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+app.post("/add-player", async (req, res) => {
+  const { name, position, country, birth_year, img, teams } = req.body;
+
+  try {
+    const playerResult = await db.query(
+      "INSERT INTO players (name, position, country,birth_year,img) VALUES ($1, $2, $3,$4,$5) RETURNING id",
+      [name, position, country, birth_year, img],
+    );
+    const newPlayerId = playerResult.rows[0].id;
+
+    for (let teamName of teams) {
+      const teamResult = await db.query(
+        "SELECT id FROM teams WHERE team_name = $1",
+        [teamName],
+      );
+
+      if (teamResult.rows.length > 0) {
+        const teamId = teamResult.rows[0].id;
+
+        await db.query(
+          "INSERT INTO player_teams (player_id, team_id) VALUES ($1, $2)",
+          [newPlayerId, teamId],
+        );
+      } else {
+        const teamResult = await db.query(
+          "insert into teams (team_name) values ($1) RETURNING id",
+          [teamName],
+        );
+        const teamid = teamResult.rows[0].id;
+        await db.query(
+          "INSERT INTO player_teams (player_id, team_id) VALUES ($1, $2)",
+          [newPlayerId, teamid],
+        );
+      }
+    }
+
+    res.status(201).send("Player and teams added successfully!");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
+});
+
 app.get("/", async (req, res) => {
   let result = await db.query("select * from players");
   result = result.rows;
