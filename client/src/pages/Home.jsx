@@ -8,15 +8,22 @@ export default function Home() {
   const [cards, setCards] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [filterItems, setFilter] = useState({
+    club: "",
+    country: "",
+    position: "",
+  });
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
+
   useEffect(() => {
     async function getPlayers() {
       try {
         const response = await axios.get("http://localhost:5000/", {
           params: {
             page: currentPage,
+            ...filterItems,
           },
           withCredentials: true,
         });
@@ -27,23 +34,36 @@ export default function Home() {
       }
     }
     getPlayers();
-  }, [currentPage]);
+  }, [
+    currentPage,
+    filterItems,
+    filterItems.club,
+    filterItems.country,
+    filterItems.position,
+  ]);
 
   async function handleFilter(filter) {
-    console.log(filter);
-    try {
-      const response = await axios.get("http://localhost:5000/filter", {
-        params: {
-          club: filter.club,
-          country: filter.country,
-          position: filter.pos,
-        },
-        withCredentials: true,
-      });
-      setCards(response.data);
-    } catch (err) {
-      console.log(err);
-    }
+    // setFilter(filter);
+    // try {
+    //   const response = await axios.get("http://localhost:5000/", {
+    //     params: {
+    //       page: currentPage,
+    //       club: filter.club,
+    //       country: filter.country,
+    //       position: filter.pos,
+    //     },
+    //     withCredentials: true,
+    //   });
+    //   setFilter(filterItems);
+    //   setCards(response.data.players);
+    // } catch (err) {
+    //   console.log(err);
+    // }
+    // بنحدث الـ filterItems بالقيم الجديدة
+    setFilter(filter);
+
+    // بنرجع اليوزر للصفحة الأولى أوتوماتيك عشان نتائج الفلتر تبدأ من الأول
+    setCurrentPage(1);
   }
   async function filterByName(playerName) {
     try {

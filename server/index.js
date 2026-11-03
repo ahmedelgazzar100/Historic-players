@@ -70,9 +70,10 @@ app.get("/", async (req, res) => {
   try {
     // 1. استقبال رقم الصفحة من الـ Query Params (لو متبعتش بنفترض إنه صفحة 1)
     const page = parseInt(req.query.page) || 1;
+    const { country, position, club } = req.query;
     const limit = 10; // عدد اللعيبة في الصفحة الواحدة
     const offset = (page - 1) * limit;
-
+    console.log(req.query);
     // 2. استعلام يجيب عدد اللعيبة الكلي في الداتابيز (عشان نحسب عدد الصفحات)
     const countResult = await db.query("SELECT COUNT(*) FROM players");
     const totalPlayers = parseInt(countResult.rows[0].count);
@@ -80,12 +81,40 @@ app.get("/", async (req, res) => {
     // 3. حساب عدد الصفحات الكلي (بنستخدم Math.ceil عشان نقرّب للأكبر)
     const totalPages = Math.ceil(totalPlayers / limit);
 
-    // 4. استعلام يجيب اللعيبة بتوع الصفحة الحالية فقط
-    const playersResult = await db.query(
-      "SELECT * FROM players ORDER BY id ASC LIMIT $1 OFFSET $2",
-      [limit, offset],
-    );
+    let query = `
+    SELECT DISTINCT players.* 
+    FROM players 
+     JOIN player_teams ON players.id = player_teams.player_id 
+     JOIN teams ON player_teams.team_id = teams.id 
+     WHERE 1=1
+  `; //join now u have new table u can add query to search
 
+    let queryParams = [];
+    let index = 1;
+
+    if (country) {
+      query += ` AND players.country = $${index}`;
+      queryParams.push(country);
+      index++;
+    }
+
+    if (position) {
+      query += ` AND $${index} = ANY(players.position)`;
+      queryParams.push(position);
+      index++;
+    }
+
+    if (club) {
+      query += ` AND teams.team_name = $${index}`;
+      queryParams.push(club);
+      index++;
+    }
+    // 4. إضافة الـ ORDER BY والـ LIMIT و OFFSET في الآخر خالص وربطهم بالأرقام اللي بعد الشروط
+    query += ` ORDER BY players.id ASC LIMIT $${index} OFFSET $${index + 1}`;
+    queryParams.push(limit, offset); // هيدخلوا كآخر اتنين parameters
+
+    // 5. استعلام يجيب اللعيبة بتوع الصفحة الحالية فقط
+    const playersResult = await db.query(query, queryParams);
     res.json({
       players: playersResult.rows,
       currentPage: page,
@@ -104,46 +133,46 @@ app.get("/getcountries", async (req, res) => {
   res.status(200).json(result);
 });
 
-app.get("/filter", async (req, res) => {
-  const { country, position, club } = req.query;
+// app.get("/filter", async (req, res) => {
+//   const { country, position, club } = req.query;
 
-  let query = `
-    SELECT DISTINCT players.* 
-    FROM players 
-     JOIN player_teams ON players.id = player_teams.player_id 
-     JOIN teams ON player_teams.team_id = teams.id 
-    WHERE 1=1
-  `; //join now u have new table u can add query to search
+//   let query = `
+//     SELECT DISTINCT players.*
+//     FROM players
+//      JOIN player_teams ON players.id = player_teams.player_id
+//      JOIN teams ON player_teams.team_id = teams.id
+//     WHERE 1=1
+//   `; //join now u have new table u can add query to search
 
-  let queryParams = [];
-  let index = 1;
+//   let queryParams = [];
+//   let index = 1;
 
-  if (country) {
-    query += ` AND players.country = $${index}`;
-    queryParams.push(country);
-    index++;
-  }
+//   if (country) {
+//     query += ` AND players.country = $${index}`;
+//     queryParams.push(country);
+//     index++;
+//   }
 
-  if (position) {
-    query += ` AND $${index} = ANY(players.position)`;
-    queryParams.push(position);
-    index++;
-  }
+//   if (position) {
+//     query += ` AND $${index} = ANY(players.position)`;
+//     queryParams.push(position);
+//     index++;
+//   }
 
-  if (club) {
-    query += ` AND teams.team_name = $${index}`;
-    queryParams.push(club);
-    index++;
-  }
+//   if (club) {
+//     query += ` AND teams.team_name = $${index}`;
+//     queryParams.push(club);
+//     index++;
+//   }
 
-  try {
-    let result = await db.query(query, queryParams);
-    res.status(200).json(result.rows);
-  } catch (error) {
-    console.log("error", error);
-    res.status(500).json({ message: "Server Error" });
-  }
-});
+//   try {
+//     let result = await db.query(query, queryParams);
+//     res.status(200).json(result.rows);
+//   } catch (error) {
+//     console.log("error", error);
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// });
 
 app.get("/filterName", async (req, res) => {
   const { name } = req.query;
