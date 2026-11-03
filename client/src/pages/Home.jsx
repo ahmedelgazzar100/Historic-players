@@ -13,16 +13,19 @@ export default function Home() {
     country: "",
     position: "",
   });
+  const [name, setName] = useState("");
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
   useEffect(() => {
+    console.log(filterItems.position);
     async function getPlayers() {
       try {
         const response = await axios.get("http://localhost:5000/", {
           params: {
             page: currentPage,
+            name: name,
             ...filterItems,
           },
           withCredentials: true,
@@ -40,49 +43,23 @@ export default function Home() {
     filterItems.club,
     filterItems.country,
     filterItems.position,
+    name,
   ]);
 
   async function handleFilter(filter) {
-    // setFilter(filter);
-    // try {
-    //   const response = await axios.get("http://localhost:5000/", {
-    //     params: {
-    //       page: currentPage,
-    //       club: filter.club,
-    //       country: filter.country,
-    //       position: filter.pos,
-    //     },
-    //     withCredentials: true,
-    //   });
-    //   setFilter(filterItems);
-    //   setCards(response.data.players);
-    // } catch (err) {
-    //   console.log(err);
-    // }
-    // بنحدث الـ filterItems بالقيم الجديدة
     setFilter(filter);
-
     // بنرجع اليوزر للصفحة الأولى أوتوماتيك عشان نتائج الفلتر تبدأ من الأول
     setCurrentPage(1);
   }
-  async function filterByName(playerName) {
-    try {
-      const response = await axios.get("http://localhost:5000/filterName", {
-        params: {
-          name: playerName,
-        },
-        withCredentials: true,
-      });
-      const data = response.data;
-      setCards(data);
-    } catch (err) {
-      console.log(err);
-    }
+
+  async function handleName(playerName) {
+    setName(playerName);
+    setCurrentPage(1);
   }
 
   return (
     <>
-      <Header onName={filterByName} />
+      <Header onName={handleName} />
       <Filters onFilter={handleFilter} />
       <div className="players-grid">
         {cards.map((player, index) => {

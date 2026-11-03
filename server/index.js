@@ -67,54 +67,71 @@ app.post("/add-player", async (req, res) => {
 
 // Endpoint لجلـب الأساطير متقسمين صفحات
 app.get("/", async (req, res) => {
+  //ترتيب الاوامر في الكيوري مهم بتحط وير اول بعد كدا شروطك كلها بعدين ليميت واوفسيت
   try {
-    // 1. استقبال رقم الصفحة من الـ Query Params (لو متبعتش بنفترض إنه صفحة 1)
     const page = parseInt(req.query.page) || 1;
-    const { country, position, club } = req.query;
-    const limit = 10; // عدد اللعيبة في الصفحة الواحدة
+    const { country, club, name } = req.query;
+    const position = req.query.position;
+    const limit = 10;
     const offset = (page - 1) * limit;
-    console.log(req.query);
-    // 2. استعلام يجيب عدد اللعيبة الكلي في الداتابيز (عشان نحسب عدد الصفحات)
-    const countResult = await db.query("SELECT COUNT(*) FROM players");
-    const totalPlayers = parseInt(countResult.rows[0].count);
 
-    // 3. حساب عدد الصفحات الكلي (بنستخدم Math.ceil عشان نقرّب للأكبر)
-    const totalPages = Math.ceil(totalPlayers / limit);
-
-    let query = `
-    SELECT DISTINCT players.* 
-    FROM players 
-     JOIN player_teams ON players.id = player_teams.player_id 
-     JOIN teams ON player_teams.team_id = teams.id 
-     WHERE 1=1
-  `; //join now u have new table u can add query to search
-
+    // 1. الشروط المشتركة للبحث والفلترة
+    let whereClause = "WHERE 1=1";
     let queryParams = [];
     let index = 1;
+    if (name) {
+      whereClause += ` AND players.name Ilike $${index}`;
+      queryParams.push(`%${name}%`);
+      index++;
+    }
 
     if (country) {
-      query += ` AND players.country = $${index}`;
+      whereClause += ` AND players.country = $${index}`;
       queryParams.push(country);
       index++;
     }
 
     if (position) {
-      query += ` AND $${index} = ANY(players.position)`;
+      whereClause += ` AND $${index} = ANY(players.position)`;
       queryParams.push(position);
       index++;
     }
 
     if (club) {
-      query += ` AND teams.team_name = $${index}`;
+      whereClause += ` AND teams.team_name = $${index}`;
       queryParams.push(club);
       index++;
     }
-    // 4. إضافة الـ ORDER BY والـ LIMIT و OFFSET في الآخر خالص وربطهم بالأرقام اللي بعد الشروط
-    query += ` ORDER BY players.id ASC LIMIT $${index} OFFSET $${index + 1}`;
-    queryParams.push(limit, offset); // هيدخلوا كآخر اتنين parameters
 
-    // 5. استعلام يجيب اللعيبة بتوع الصفحة الحالية فقط
-    const playersResult = await db.query(query, queryParams);
+    // 2. هنجيب العدد الإجمالي الحقيقي (سواء فيه فلتر أو مفيش) باستخدام COUNT
+    const countQuery = `
+      SELECT COUNT(DISTINCT players.id) 
+      FROM players 
+      JOIN player_teams ON players.id = player_teams.player_id 
+      JOIN teams ON player_teams.team_id = teams.id 
+      ${whereClause}
+    `;
+    // console.log("Generated Query:", countQuery);
+    const countResult = await db.query(countQuery, queryParams);
+    console.log("countResult", countResult);
+    const totalPlayers = parseInt(countResult.rows[0].count); // الرقم الحقيقي (مثلاً 35)
+    const totalPages = Math.ceil(totalPlayers / limit); // عدد الصفحات الحقيقي
+
+    // 3. نجيب لعيبة الصفحة الحالية فقط بالـ LIMIT والـ OFFSET
+    let playersQuery = `
+      SELECT DISTINCT players.* 
+      FROM players 
+      JOIN player_teams ON players.id = player_teams.player_id 
+      JOIN teams ON player_teams.team_id = teams.id 
+      ${whereClause}
+      ORDER BY players.id ASC 
+      LIMIT $${index} OFFSET $${index + 1}
+    `;
+
+    const playersParams = [...queryParams, limit, offset];
+    const playersResult = await db.query(playersQuery, playersParams);
+
+    // 4. الرد النهائي للفرونت إند
     res.json({
       players: playersResult.rows,
       currentPage: page,
@@ -127,67 +144,6 @@ app.get("/", async (req, res) => {
   }
 });
 
-app.get("/getcountries", async (req, res) => {
-  let result = await db.query("select  DISTINCT  country from players");
-  result = result.rows;
-  res.status(200).json(result);
-});
-
-// app.get("/filter", async (req, res) => {
-//   const { country, position, club } = req.query;
-
-//   let query = `
-//     SELECT DISTINCT players.*
-//     FROM players
-//      JOIN player_teams ON players.id = player_teams.player_id
-//      JOIN teams ON player_teams.team_id = teams.id
-//     WHERE 1=1
-//   `; //join now u have new table u can add query to search
-
-//   let queryParams = [];
-//   let index = 1;
-
-//   if (country) {
-//     query += ` AND players.country = $${index}`;
-//     queryParams.push(country);
-//     index++;
-//   }
-
-//   if (position) {
-//     query += ` AND $${index} = ANY(players.position)`;
-//     queryParams.push(position);
-//     index++;
-//   }
-
-//   if (club) {
-//     query += ` AND teams.team_name = $${index}`;
-//     queryParams.push(club);
-//     index++;
-//   }
-
-//   try {
-//     let result = await db.query(query, queryParams);
-//     res.status(200).json(result.rows);
-//   } catch (error) {
-//     console.log("error", error);
-//     res.status(500).json({ message: "Server Error" });
-//   }
-// });
-
-app.get("/filterName", async (req, res) => {
-  const { name } = req.query;
-  try {
-    let result = await db.query("select * from players where name Ilike ($1)", [
-      `%${name}%`,
-    ]);
-    result = result.rows;
-    res.status(200).json(result);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server Error" });
-  }
-});
-
 app.get("/getTeams", async (req, res) => {
   try {
     const response = await db.query("select * from teams");
@@ -195,6 +151,11 @@ app.get("/getTeams", async (req, res) => {
   } catch (err) {
     console.log(err);
   }
+});
+app.get("/getcountries", async (req, res) => {
+  let result = await db.query("select  DISTINCT  country from players");
+  result = result.rows;
+  res.status(200).json(result);
 });
 
 app.listen(5000, () => {

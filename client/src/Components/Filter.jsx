@@ -34,7 +34,7 @@ const Filters = (props) => {
   const [filter, setFilter] = useState({
     club: "",
     country: "",
-    pos: "",
+    position: "",
   });
 
   function handleChange(event) {
@@ -51,7 +51,7 @@ const Filters = (props) => {
     const clearedFilter = {
       club: "",
       country: "",
-      pos: "",
+      position: "",
     };
     setFilter(clearedFilter);
     props.onFilter(clearedFilter);
@@ -62,7 +62,7 @@ const Filters = (props) => {
       <div className="container">
         <div className="filter-group">
           <label>position</label>
-          <select name="pos" onChange={handleChange} value={filter.pos}>
+          <select name="position" onChange={handleChange} value={filter.pos}>
             <option value="">All Positions</option>
             <optgroup label="Attackers (الهجوم)">
               <option value="ST">ST (Striker - مهاجم صريح)</option>
