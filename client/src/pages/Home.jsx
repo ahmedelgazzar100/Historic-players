@@ -1,32 +1,60 @@
 import Filters from "../Components/Filter";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import PlayerCard from "../Components/card";
 import Header from "../Components/Header";
 import Pagination from "../Components/Pagination";
 export default function Home() {
   const [cards, setCards] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [filterItems, setFilter] = useState({
-    club: "",
-    country: "",
-    position: "",
-  });
-  const [name, setName] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page")) || 1;
+  const currentClub = searchParams.get("club") || "";
+  const currentCountry = searchParams.get("country") || "";
+  const currentPosition = searchParams.get("position") || "";
+  const currentName = searchParams.get("name") || "";
+
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+    setSearchParams({
+      page: newPage,
+      club: currentClub,
+      country: currentCountry,
+      position: currentPosition,
+      name: currentName,
+    });
+  };
+
+  const handleFilter = (filter) => {
+    setSearchParams({
+      page: 1, // نرجع لأول صفحة مع كل فلتر جديد
+      club: filter.club || "",
+      country: filter.country || "",
+      position: filter.position || "",
+      name: currentName,
+    });
+  };
+
+  const handleName = (playerName) => {
+    setSearchParams({
+      page: 1, // نرجع لأول صفحة مع كل بحث جديد
+      club: currentClub,
+      country: currentCountry,
+      position: currentPosition,
+      name: playerName,
+    });
   };
 
   useEffect(() => {
-    console.log(filterItems.position);
     async function getPlayers() {
       try {
         const response = await axios.get("http://localhost:5000/", {
           params: {
             page: currentPage,
-            name: name,
-            ...filterItems,
+            name: currentName,
+            club: currentClub,
+            country: currentCountry,
+            position: currentPosition,
           },
           withCredentials: true,
         });
@@ -39,23 +67,12 @@ export default function Home() {
     getPlayers();
   }, [
     currentPage,
-    filterItems,
-    filterItems.club,
-    filterItems.country,
-    filterItems.position,
-    name,
+    currentClub,
+    currentCountry,
+    currentPosition,
+    currentName,
+    searchParams,
   ]);
-
-  async function handleFilter(filter) {
-    setFilter(filter);
-    // بنرجع اليوزر للصفحة الأولى أوتوماتيك عشان نتائج الفلتر تبدأ من الأول
-    setCurrentPage(1);
-  }
-
-  async function handleName(playerName) {
-    setName(playerName);
-    setCurrentPage(1);
-  }
 
   return (
     <>

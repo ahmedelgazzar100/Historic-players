@@ -113,7 +113,7 @@ app.get("/", async (req, res) => {
     `;
     // console.log("Generated Query:", countQuery);
     const countResult = await db.query(countQuery, queryParams);
-    console.log("countResult", countResult);
+    // console.log("countResult", countResult);
     const totalPlayers = parseInt(countResult.rows[0].count); // الرقم الحقيقي (مثلاً 35)
     const totalPages = Math.ceil(totalPlayers / limit); // عدد الصفحات الحقيقي
 
