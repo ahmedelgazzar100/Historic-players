@@ -3,22 +3,31 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import PlayerCard from "../Components/card";
 import Header from "../Components/Header";
+import Pagination from "../Components/Pagination";
 export default function Home() {
   const [cards, setCards] = useState([]);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
   useEffect(() => {
     async function getPlayers() {
       try {
         const response = await axios.get("http://localhost:5000/", {
+          params: {
+            page: currentPage,
+          },
           withCredentials: true,
         });
-        setCards(response.data);
+        setCards(response.data.players);
+        setTotalPages(response.data.totalPages);
       } catch (error) {
         console.log("error", error);
       }
     }
     getPlayers();
-  }, []);
+  }, [currentPage]);
 
   async function handleFilter(filter) {
     console.log(filter);
@@ -60,6 +69,11 @@ export default function Home() {
           return <PlayerCard name={player.name} img={player.img} key={index} />;
         })}
       </div>
+      <Pagination
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 }

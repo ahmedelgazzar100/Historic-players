@@ -1,0 +1,70 @@
+.pagination-container {
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* التنسيق الأساسي للأزرار والنقاط */
+.pagination button,
+.pagination .ellipsis {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-family: "Cairo", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pagination button {
+  background-color: var(--main-color, #fff);
+  color: var(--alt-color, #333);
+  border: 1px solid var(--alt-color, #ccc);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* شكل الزرار لما الماوس ييجي عليه */
+.pagination button:hover:not(:disabled):not(.active) {
+  background-color: #f0f4f9;
+  border-color: var(--alt-color, #333);
+}
+
+/* الزرار النشط (الصفحة الحالية) */
+.pagination button.active {
+  background-color: var(--alt-color, #007bff);
+  color: #fff;
+  border-color: var(--alt-color, #007bff);
+}
+
+/* الأزرار غير المفعّلة (السابق/التالي في البداية والنهاية) */
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+/* نقاط الـ ellipsis (...) */
+.pagination .ellipsis {
+  color: #888;
+  background: transparent;
+}
+
+/* Responsive للموبايل */
+@media (max-width: 576px) {
+  .pagination button,
+  .pagination .ellipsis {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+}

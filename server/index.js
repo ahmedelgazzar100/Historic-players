@@ -8,19 +8,17 @@ import session from "express-session";
 import env from "dotenv";
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 env.config();
 
-const db = new pg.Client({
+const db = new pg.Pool({
   user: "postgres",
   host: "localhost",
   database: "Historic",
   password: "123456",
   port: 5432,
 });
-db.connect();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -60,7 +58,6 @@ app.post("/add-player", async (req, res) => {
         );
       }
     }
-
     res.status(201).send("Player and teams added successfully!");
   } catch (err) {
     console.error(err);
@@ -68,10 +65,37 @@ app.post("/add-player", async (req, res) => {
   }
 });
 
+// Endpoint لجلـب الأساطير متقسمين صفحات
 app.get("/", async (req, res) => {
-  let result = await db.query("select * from players");
-  result = result.rows;
-  res.status(200).json(result);
+  try {
+    // 1. استقبال رقم الصفحة من الـ Query Params (لو متبعتش بنفترض إنه صفحة 1)
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10; // عدد اللعيبة في الصفحة الواحدة
+    const offset = (page - 1) * limit;
+
+    // 2. استعلام يجيب عدد اللعيبة الكلي في الداتابيز (عشان نحسب عدد الصفحات)
+    const countResult = await db.query("SELECT COUNT(*) FROM players");
+    const totalPlayers = parseInt(countResult.rows[0].count);
+
+    // 3. حساب عدد الصفحات الكلي (بنستخدم Math.ceil عشان نقرّب للأكبر)
+    const totalPages = Math.ceil(totalPlayers / limit);
+
+    // 4. استعلام يجيب اللعيبة بتوع الصفحة الحالية فقط
+    const playersResult = await db.query(
+      "SELECT * FROM players ORDER BY id ASC LIMIT $1 OFFSET $2",
+      [limit, offset],
+    );
+
+    res.json({
+      players: playersResult.rows,
+      currentPage: page,
+      totalPages: totalPages,
+      totalPlayers: totalPlayers,
+    });
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 app.get("/getcountries", async (req, res) => {
