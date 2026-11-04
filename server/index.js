@@ -179,6 +179,20 @@ app.get("/getbio", async (req, res) => {
   }
 });
 
+app.post("/add-favorite", async (req, res) => {
+  try {
+    const playerId = req.body.playerId;
+    const result = await db.query(
+      "insert into user_fav (user_id,player_id) values ($1,$2)",
+      [1, playerId],
+    );
+    res.status(201).json({ message: "Added to favorites successfully!" });
+  } catch (error) {
+    console.log(error);
+    res.status(500);
+  }
+});
+
 app.listen(5000, () => {
   console.log("Server started on port 5000");
 });

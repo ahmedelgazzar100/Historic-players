@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import axios from "axios";
@@ -9,7 +9,6 @@ export default function PlayerDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const navigate = useNavigate();
   const { playerId } = useParams();
-  console.log(playerId);
   const [player, setPlayer] = useState();
   useEffect(() => {
     async function getBio() {
@@ -39,11 +38,12 @@ export default function PlayerDetails() {
   const toggleFavorite = async () => {
     try {
       if (!isFavorite) {
-        await axios.post(
+        const result = await axios.post(
           "http://localhost:5000/add-favorite",
-          { playerId: playerId },
-          { withCredentials: true },
+          { playerId: playerId }, //req.body
+          { withCredentials: true }, //cookies
         );
+        console.log(result.data);
         setIsFavorite(true);
       } else {
         // لو مفضلة، ابعت request يحذفها
