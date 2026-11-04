@@ -1,6 +1,7 @@
 import Filters from "../Components/Filter";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import PlayerCard from "../Components/card";
 import Header from "../Components/Header";
@@ -14,6 +15,7 @@ export default function Home() {
   const currentCountry = searchParams.get("country") || "";
   const currentPosition = searchParams.get("position") || "";
   const currentName = searchParams.get("name") || "";
+  const navigate = useNavigate();
 
   const handlePageChange = (newPage) => {
     setSearchParams({
@@ -74,13 +76,25 @@ export default function Home() {
     searchParams,
   ]);
 
+  function handleClick(playerId) {
+    navigate(`/players/${playerId}`);
+  }
+
   return (
     <>
       <Header onName={handleName} />
       <Filters onFilter={handleFilter} />
       <div className="players-grid">
-        {cards.map((player, index) => {
-          return <PlayerCard name={player.name} img={player.img} key={index} />;
+        {cards.map((player) => {
+          return (
+            <PlayerCard
+              name={player.name}
+              img={player.img}
+              key={player.id}
+              id={player.id}
+              onClick={handleClick}
+            />
+          );
         })}
       </div>
       <Pagination

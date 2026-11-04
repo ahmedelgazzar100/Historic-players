@@ -24,12 +24,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.post("/add-player", async (req, res) => {
-  const { name, position, country, birth_year, img, teams } = req.body;
+  const { name, position, country, birth_year, img, teams, bio } = req.body;
 
   try {
     const playerResult = await db.query(
-      "INSERT INTO players (name, position, country,birth_year,img) VALUES ($1, $2, $3,$4,$5) RETURNING id",
-      [name, position, country, birth_year, img],
+      "INSERT INTO players (name, position, country,birth_year,img,bio) VALUES ($1, $2, $3,$4,$5,$6) RETURNING id",
+      [name, position, country, birth_year, img, bio],
     );
     const newPlayerId = playerResult.rows[0].id;
 
@@ -156,6 +156,28 @@ app.get("/getcountries", async (req, res) => {
   let result = await db.query("select  DISTINCT  country from players");
   result = result.rows;
   res.status(200).json(result);
+});
+
+app.get("/getbio", async (req, res) => {
+  const id = parseInt(req.query.id);
+  // console.log(id);
+  try {
+    const result = await db.query(
+      `select   players.*  , ARRAY_AGG (teams.team_name) AS my_teams  
+       FROM players  
+       join player_teams on players.id = player_teams.player_id 
+       JOIN teams ON player_teams.team_id = teams.id  
+       where players.id=($1)  
+       Group by players.id `,
+      [id],
+    );
+    const information = result.rows[0];
+    console.log(information);
+    res.status(201).json(information);
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 app.listen(5000, () => {
