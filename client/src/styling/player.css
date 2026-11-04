@@ -108,6 +108,9 @@
     margin: 15px;
     padding: 20px;
   }
+  .player-bio-section h2 {
+    margin-bottom: 10px;
+  }
 }
 
 /* تنسيق قسم الفرق */
@@ -146,4 +149,17 @@
   margin-top: 50px;
   font-size: 1.2rem;
   color: var(--alt-color, #7b9acc);
+}
+.goHome {
+  display: block;
+  border: none;
+  cursor: pointer;
+  background-color: var(--alt-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  margin: 20px auto 0;
 }

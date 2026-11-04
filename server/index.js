@@ -172,7 +172,6 @@ app.get("/getbio", async (req, res) => {
       [id],
     );
     const information = result.rows[0];
-    console.log(information);
     res.status(201).json(information);
   } catch (error) {
     console.error("Database Error:", error);

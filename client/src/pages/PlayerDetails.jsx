@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import "../styling/player.css";
 
 export default function PlayerDetails() {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const navigate = useNavigate();
   const { playerId } = useParams();
+  console.log(playerId);
   const [player, setPlayer] = useState();
   useEffect(() => {
     async function getBio() {
@@ -27,9 +32,34 @@ export default function PlayerDetails() {
     return <div className="loading-text">Loading player data...</div>;
   }
 
+  function handleClick() {
+    navigate("/");
+  }
+
+  const toggleFavorite = async () => {
+    try {
+      if (!isFavorite) {
+        await axios.post(
+          "http://localhost:5000/add-favorite",
+          { playerId: playerId },
+          { withCredentials: true },
+        );
+        setIsFavorite(true);
+      } else {
+        // لو مفضلة، ابعت request يحذفها
+        // await axios.delete(
+        //   `http://localhost:5000/remove-favorite/${playerId}`,
+        //   { withCredentials: true },
+        // );
+        setIsFavorite(false);
+      }
+    } catch (error) {
+      console.log("Error updating favorite:", error);
+    }
+  };
+
   return (
     <div className="player-page-container">
-      {/* 1. قسم الهيدر (صورة اللاعب والبيانات الأساسية) */}
       <header className="player-header">
         <div className="player-img-wrapper">
           <img src={player.img} alt={player.name} className="player-img" />
@@ -39,7 +69,6 @@ export default function PlayerDetails() {
           <h1 className="player-name">{player.name}</h1>
           <p className="player-country">📍 {player.country}</p>
           <p className="player-age">🎂 {player.birth_year} Years Old</p>
-          {/* عرض المراكز كـ Array بلفه عليها أو عرضها بـ join */}
           <div className="player-positions">
             {player.position.map((pos, index) => (
               <span key={index} className="position-badge">
@@ -60,13 +89,31 @@ export default function PlayerDetails() {
         </div>
       </header>
 
-      {/* 2. قسم السيرة الذاتية (Bio) تحت الهيدر */}
       <section className="player-bio-section">
         <h2>Biography</h2>
         <p className="player-bio-text">
           {player.bio || "No biography available for this player yet."}
         </p>
       </section>
+      <button className="goHome" onClick={handleClick}>
+        Home
+      </button>
+      <button
+        onClick={toggleFavorite}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "1.5rem",
+        }}
+        title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      >
+        {isFavorite ? (
+          <FaHeart style={{ color: "#e74c3c" }} />
+        ) : (
+          <FaRegHeart style={{ color: "#7b9acc" }} />
+        )}
+      </button>
     </div>
   );
 }
