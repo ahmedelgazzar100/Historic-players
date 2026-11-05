@@ -8,7 +8,9 @@ const Filters = (props) => {
   useEffect(() => {
     async function getCountries() {
       try {
-        const response = await axios.get("http://localhost:5000/getcountries");
+        const response = await axios.get("http://localhost:5000/getcountries", {
+          withCredentials: true,
+        });
         const data = response.data;
         setCountries(data);
       } catch (err) {
@@ -21,7 +23,9 @@ const Filters = (props) => {
   useEffect(() => {
     async function getTeams() {
       try {
-        const response = await axios.get("http://localhost:5000/getTeams");
+        const response = await axios.get("http://localhost:5000/getTeams", {
+          withCredentials: true,
+        });
         const data = response.data;
         setTeams(data);
       } catch (err) {
@@ -53,6 +57,7 @@ const Filters = (props) => {
       country: "",
       position: "",
     };
+
     setFilter(clearedFilter);
     props.onFilter(clearedFilter);
   }
@@ -62,7 +67,11 @@ const Filters = (props) => {
       <div className="container">
         <div className="filter-group">
           <label>position</label>
-          <select name="position" onChange={handleChange} value={filter.pos}>
+          <select
+            name="position"
+            onChange={handleChange}
+            value={filter.position}
+          >
             <option value="">All Positions</option>
             <optgroup label="Attackers (الهجوم)">
               <option value="ST">ST (Striker - مهاجم صريح)</option>

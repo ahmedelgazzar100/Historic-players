@@ -12,6 +12,20 @@ app.use(express.json());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 env.config();
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false, //   false أماناً عشان ما يخزنش جلسات فاضية بلا داعي
+    cookie: {
+      secure: false, //  خليها true لو طلعت على سيرفر حقيقي بيشتغل بـ HTTPS، وخليها false لو شغالين Localhost
+      sameSite: "lax", //   السطر ده عشان المتصفح يسمح للكوكي تفضل محفوظة مع التنقلات والـ Refresh
+      httpOnly: true, //  بتمنع الجافاسكريبت في الفرونت إند إنه يوصل للكوكي (حماية ضد سرقة الجلسة)
+      maxAge: 1000 * 60 * 60 * 24 * 7, // الجلسة تفضل شغالة أسبوع مثلاً
+    },
+  }),
+);
+
 const db = new pg.Pool({
   user: "postgres",
   host: "localhost",
@@ -22,6 +36,9 @@ const db = new pg.Pool({
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.post("/add-player", async (req, res) => {
   const { name, position, country, birth_year, img, teams, bio } = req.body;
@@ -65,8 +82,10 @@ app.post("/add-player", async (req, res) => {
   }
 });
 
-// Endpoint لجلـب الأساطير متقسمين صفحات
 app.get("/", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
   //ترتيب الاوامر في الكيوري مهم بتحط وير اول بعد كدا شروطك كلها بعدين ليميت واوفسيت
   try {
     const page = parseInt(req.query.page) || 1;
@@ -145,6 +164,9 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/getTeams", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
   try {
     const response = await db.query("select * from teams");
     res.status(200).json(response.rows);
@@ -153,12 +175,18 @@ app.get("/getTeams", async (req, res) => {
   }
 });
 app.get("/getcountries", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
   let result = await db.query("select  DISTINCT  country from players");
   result = result.rows;
   res.status(200).json(result);
 });
 
 app.get("/getbio", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
   const id = parseInt(req.query.id);
   // console.log(id);
   try {
@@ -171,8 +199,18 @@ app.get("/getbio", async (req, res) => {
        Group by players.id `,
       [id],
     );
+    const userId = req.user.id;
+    const isFav = await db.query(
+      "select user_id from user_fav where user_id=$1 and player_id=$2",
+      [userId, id],
+    );
     const information = result.rows[0];
-    res.status(201).json(information);
+    const isFavorite = isFav.rows.length > 0; // هيرجع true أو false
+
+    res.status(200).json({
+      information,
+      isFavorite: isFavorite,
+    });
   } catch (error) {
     console.error("Database Error:", error);
     res.status(500).json({ error: "Server error" });
@@ -182,15 +220,145 @@ app.get("/getbio", async (req, res) => {
 app.post("/add-favorite", async (req, res) => {
   try {
     const playerId = req.body.playerId;
+    const userId = req.user.id;
+
     const result = await db.query(
       "insert into user_fav (user_id,player_id) values ($1,$2)",
-      [1, playerId],
+      [userId, playerId],
     );
     res.status(201).json({ message: "Added to favorites successfully!" });
   } catch (error) {
     console.log(error);
     res.status(500);
   }
+});
+
+app.delete("/remove-favorite/:playerId", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
+
+  try {
+    const playerId = req.params.playerId;
+    const userId = req.user.id;
+
+    await db.query(
+      "DELETE FROM user_fav WHERE user_id = $1 AND player_id = $2",
+      [userId, playerId],
+    );
+
+    console.log(`Removed player ${playerId} for user ${userId}`);
+    res.status(200).json({ message: "delete is done" });
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/getfav", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
+
+  try {
+    const players = await db.query(
+      `select players.name,players.img,players.id
+       from players 
+       join user_fav 
+       on players.id=user_fav.player_id 
+       join users 
+       on users.id=user_fav.user_id
+       where users.id =$1
+       `,
+      [req.user.id],
+    );
+    const result = players.rows;
+    console.log(result);
+    res.status(201).json(result);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+app.get("/api/check-auth", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json({ isAuthenticated: true, user: req.user });
+  } else {
+    res
+      .status(401)
+      .json({ isAuthenticated: false, message: "غير مسجل الدخول" });
+  }
+});
+
+app.get("/api/logout", (req, res, next) => {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    req.session.destroy((err) => {
+      if (err) {
+        return console.log("Error destroying session:", err);
+      }
+      res.clearCookie("connect.sid");
+      return res.json({ message: "تم تسجيل الخروج بنجاح" });
+    });
+  });
+});
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  }),
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: `http://localhost:5173`,
+  }),
+  (req, res) => {
+    res.redirect(`http://localhost:5173/home`);
+  },
+);
+
+passport.use(
+  "google",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:5000/auth/google/callback",
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+    },
+    async (accessToken, refreshToken, Profile, cb) => {
+      try {
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [
+          Profile.email,
+        ]);
+        if (result.rows.length === 0) {
+          const newUser = await db.query(
+            "INSERT INTO users (email, user_password) VALUES ($1, $2) RETURNING *",
+            [Profile.email, "google"],
+          );
+          return cb(null, newUser.rows[0]);
+        } else {
+          return cb(null, result.rows[0]);
+        }
+      } catch (err) {
+        return cb(err);
+      }
+    },
+  ),
+);
+
+passport.serializeUser((user, cb) => {
+  cb(null, user.id);
+});
+
+passport.deserializeUser(async (id, cb) => {
+  const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+  cb(null, result.rows[0]);
 });
 
 app.listen(5000, () => {

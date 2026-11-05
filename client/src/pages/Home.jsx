@@ -27,16 +27,6 @@ export default function Home() {
     });
   };
 
-  const handleFilter = (filter) => {
-    setSearchParams({
-      page: 1, // نرجع لأول صفحة مع كل فلتر جديد
-      club: filter.club || "",
-      country: filter.country || "",
-      position: filter.position || "",
-      name: currentName,
-    });
-  };
-
   const handleName = (playerName) => {
     setSearchParams({
       page: 1, // نرجع لأول صفحة مع كل بحث جديد
@@ -47,9 +37,25 @@ export default function Home() {
     });
   };
 
+  const handleFilter = (filter) => {
+    setSearchParams({
+      page: 1, // نرجع لأول صفحة مع كل فلتر جديد
+      club: filter.club || "",
+      country: filter.country || "",
+      position: filter.position || "",
+      name: currentName,
+    });
+  };
+
   useEffect(() => {
     async function getPlayers() {
       try {
+        // 1. نتأكد الأول إن اليوزر مسجل دخول
+        await axios.get("http://localhost:5000/api/check-auth", {
+          withCredentials: true,
+        });
+
+        // 2. لو عدى السطر اللي فوق من غير إيرور، معناه إنه مسجل، نجيب اللعيبة عادي
         const response = await axios.get("http://localhost:5000/", {
           params: {
             page: currentPage,
@@ -64,8 +70,13 @@ export default function Home() {
         setTotalPages(response.data.totalPages);
       } catch (error) {
         console.log("error", error);
+        // 3. لو حصل إيرور بسبب إن اليوزر مش مسجل (401)، اطرده لبرة فوراً
+        if (error.response && error.response.status === 401) {
+          navigate("/");
+        }
       }
     }
+
     getPlayers();
   }, [
     currentPage,
@@ -79,10 +90,27 @@ export default function Home() {
   function handleClick(playerId) {
     navigate(`/players/${playerId}`);
   }
+  const handleLogout = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/logout", {
+        withCredentials: true,
+      });
+
+      console.log(response.data.message);
+
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  function onFav() {
+    navigate("/userfav");
+  }
 
   return (
     <>
-      <Header onName={handleName} />
+      <Header onName={handleName} onFavClick={onFav} />
       <Filters onFilter={handleFilter} />
       <div className="players-grid">
         {cards.map((player) => {
@@ -102,6 +130,24 @@ export default function Home() {
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
+
+      <button
+        onClick={handleLogout}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#666",
+          fontSize: "0.95rem",
+          fontWeight: "600",
+          cursor: "pointer",
+          padding: "6px 12px",
+          transition: "color 0.2s ease",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#7b9acc")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+      >
+        Logout
+      </button>
     </>
   );
 }

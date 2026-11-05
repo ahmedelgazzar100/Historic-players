@@ -13,15 +13,26 @@ export default function PlayerDetails() {
   useEffect(() => {
     async function getBio() {
       try {
+        // 1. نتأكد الأول إن اليوزر مسجل دخول
+        await axios.get("http://localhost:5000/api/check-auth", {
+          withCredentials: true,
+        });
+
         const result = await axios.get("http://localhost:5000/getbio", {
           params: {
             id: playerId,
           },
           withCredentials: true,
         });
-        setPlayer(result.data);
+        setPlayer(result.data.information);
+        if (result.data.isFavorite) {
+          setIsFavorite(true);
+        }
       } catch (error) {
         console.log(error);
+        if (error.response && error.response.status === 401) {
+          navigate("/");
+        }
       }
     }
     getBio();
@@ -32,7 +43,7 @@ export default function PlayerDetails() {
   }
 
   function handleClick() {
-    navigate("/");
+    navigate("/home");
   }
 
   const toggleFavorite = async () => {
@@ -46,11 +57,10 @@ export default function PlayerDetails() {
         console.log(result.data);
         setIsFavorite(true);
       } else {
-        // لو مفضلة، ابعت request يحذفها
-        // await axios.delete(
-        //   `http://localhost:5000/remove-favorite/${playerId}`,
-        //   { withCredentials: true },
-        // );
+        await axios.delete(
+          `http://localhost:5000/remove-favorite/${playerId}`,
+          { withCredentials: true },
+        );
         setIsFavorite(false);
       }
     } catch (error) {
