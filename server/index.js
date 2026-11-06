@@ -27,7 +27,7 @@ const db = new pg.Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
 
 app.use(
   session({
@@ -353,7 +353,7 @@ app.get(
     failureRedirect: process.env.CLIENT_URL || "http://localhost:5173",
   }),
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/home`);
+    res.redirect(`${process.env.CLIENT_URL}/home`);
   },
 );
 
