@@ -53,12 +53,12 @@ export default function Home() {
       async function getPlayers() {
         try {
           // 1. نتأكد الأول إن اليوزر مسجل دخول
-          await axios.get("http://localhost:5000/api/check-auth", {
+          await axios.get("/api/check-auth", {
             withCredentials: true,
           });
 
           // 2. لو عدى السطر اللي فوق من غير إيرور، معناه إنه مسجل، نجيب اللعيبة عادي
-          const response = await axios.get("http://localhost:5000/", {
+          const response = await axios.get("/api/players", {
             params: {
               page: currentPage,
               name: currentName,
@@ -93,6 +93,7 @@ export default function Home() {
       currentName,
       searchParams,
     ],
+    //ignore navigate error
   );
 
   function handleClick(playerId) {
@@ -100,7 +101,7 @@ export default function Home() {
   }
   const handleLogout = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/logout", {
+      const response = await axios.post("/api/logout", {
         withCredentials: true,
       });
 

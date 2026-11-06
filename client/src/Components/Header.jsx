@@ -34,7 +34,7 @@ export default function Header(props) {
           >
             <FaHeart
               style={{
-                color: "#ff4757", // لون أحمر صريح يدل على المفضلة والقلوب
+                color: "#ff4757",
                 fontSize: "20px",
               }}
             />

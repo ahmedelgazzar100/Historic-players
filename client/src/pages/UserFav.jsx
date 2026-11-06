@@ -10,11 +10,11 @@ export default function UserFav() {
   useEffect(() => {
     async function getFav() {
       try {
-        await axios.get("http://localhost:5000/api/check-auth", {
+        await axios.get("/api/check-auth", {
           withCredentials: true,
         });
 
-        const result = await axios.get("http://localhost:5000/getfav", {
+        const result = await axios.get("api/getfav", {
           withCredentials: true,
         });
 

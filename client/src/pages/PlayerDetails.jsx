@@ -14,11 +14,11 @@ export default function PlayerDetails() {
     async function getBio() {
       try {
         // 1. نتأكد الأول إن اليوزر مسجل دخول
-        await axios.get("http://localhost:5000/api/check-auth", {
+        await axios.get("/api/check-auth", {
           withCredentials: true,
         });
 
-        const result = await axios.get("http://localhost:5000/getbio", {
+        const result = await axios.get("api/getbio", {
           params: {
             id: playerId,
           },
@@ -49,17 +49,16 @@ export default function PlayerDetails() {
     try {
       if (!isFavorite) {
         const result = await axios.post(
-          "http://localhost:5000/add-favorite",
+          "/api/add-favorite",
           { playerId: playerId }, //req.body
           { withCredentials: true }, //cookies
         );
         console.log(result.data);
         setIsFavorite(true);
       } else {
-        await axios.delete(
-          `http://localhost:5000/remove-favorite/${playerId}`,
-          { withCredentials: true },
-        );
+        await axios.delete(`api/remove-favorite/${playerId}`, {
+          withCredentials: true,
+        });
         setIsFavorite(false);
       }
     } catch (error) {

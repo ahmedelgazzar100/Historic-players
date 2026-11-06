@@ -6,33 +6,37 @@ import passport from "passport";
 import GoogleStrategy from "passport-google-oauth2";
 import session from "express-session";
 import env from "dotenv";
+import connectPgSimple from "connect-pg-simple"; //for vercel hosting
+
+const PgSession = connectPgSimple(session);
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 env.config();
+
+const db = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 1,
+  ssl: { rejectUnauthorized: false },
+});
+
+app.set("trust proxy", 1);
 
 app.use(
   session({
+    store: new PgSession({ pool: db, store: new PgSession({ pool: db }) }),
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false, //   false أماناً عشان ما يخزنش جلسات فاضية بلا داعي
+    saveUninitialized: false,
     cookie: {
-      secure: false, //  خليها true لو طلعت على سيرفر حقيقي بيشتغل بـ HTTPS، وخليها false لو شغالين Localhost
-      sameSite: "lax", //   السطر ده عشان المتصفح يسمح للكوكي تفضل محفوظة مع التنقلات والـ Refresh
-      httpOnly: true, //  بتمنع الجافاسكريبت في الفرونت إند إنه يوصل للكوكي (حماية ضد سرقة الجلسة)
-      maxAge: 1000 * 60 * 60 * 24 * 7, // الجلسة تفضل شغالة أسبوع مثلاً
+      secure: true,
+      sameSite: "lax", // لأن الفرونت والباك دومينين مختلفين
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   }),
 );
-
-const db = new pg.Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "Historic",
-  password: "123456",
-  port: 5432,
-});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public")); //مش ضروريه اوي لان احنا فاصلين الفرونت عن الباك ومش شغالين ssd
@@ -46,7 +50,7 @@ app.post("/add-player", async (req, res) => {
     return res.status(401).json({ message: "غير مسجل الدخول" });
   }
   // 2. التأكد إن الإيميل اللي عامل لوجين هو إيميلي الشخصي (الأدمن)
-  const adminEmail = "ahmed.elgazzzar20@gmail.com"; // my email
+  const adminEmail = process.env.ADMIN_EMAIL; // my email
   if (req.user.email !== adminEmail) {
     return res
       .status(403)
@@ -93,7 +97,7 @@ app.post("/add-player", async (req, res) => {
   }
 });
 
-app.get("/", async (req, res) => {
+app.get("/players", async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "غير مسجل الدخول" });
   }
@@ -188,7 +192,7 @@ app.get("/getTeams", async (req, res) => {
     const response = await db.query("select * from teams");
     res.status(200).json(response.rows);
   } catch (err) {
-    console.log(err);
+    res.status(500);
   }
 });
 app.get("/getcountries", async (req, res) => {
@@ -234,6 +238,9 @@ app.get("/getbio", async (req, res) => {
 });
 
 app.post("/add-favorite", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
   try {
     const playerId = req.body.playerId;
     const userId = req.user.id;
@@ -291,11 +298,11 @@ app.get("/getfav", async (req, res) => {
     const result = players.rows;
     res.status(201).json(result);
   } catch (error) {
-    console.log(error);
+    res.status(500);
   }
 });
 
-app.get("/api/check-auth", (req, res) => {
+app.get("/check-auth", (req, res) => {
   if (req.isAuthenticated()) {
     res.json({ isAuthenticated: true, user: req.user });
   } else {
@@ -305,7 +312,7 @@ app.get("/api/check-auth", (req, res) => {
   }
 });
 
-app.get("/api/logout", (req, res, next) => {
+app.post("/logout", (req, res, next) => {
   req.logout(function (err) {
     if (err) {
       return next(err);
@@ -330,10 +337,10 @@ app.get(
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `http://localhost:5173`,
+    failureRedirect: process.env.CLIENT_URL || "http://localhost:5173",
   }),
   (req, res) => {
-    res.redirect(`http://localhost:5173/home`);
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/home`);
   },
 );
 
@@ -343,7 +350,9 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/auth/google/callback",
+      callbackURL:
+        process.env.CALLBACK_URL ||
+        "http://localhost:5000/auth/google/callback",
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
     },
     async (accessToken, refreshToken, Profile, cb) => {
@@ -372,10 +381,15 @@ passport.serializeUser((user, cb) => {
 }); //run only with login and saved in cookie.
 
 passport.deserializeUser(async (id, cb) => {
-  const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
-  cb(null, result.rows[0]);
+  try {
+    const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
+    cb(null, result.rows[0]);
+  } catch (err) {
+    cb(err);
+  }
 }); //run with every request.
 
-app.listen(5000, () => {
-  console.log("Server started on port 5000");
-});
+if (!process.env.VERCEL) {
+  app.listen(5000, () => console.log("Server started on port 5000"));
+}
+export default app;
