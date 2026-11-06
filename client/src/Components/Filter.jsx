@@ -8,7 +8,7 @@ const Filters = (props) => {
   useEffect(() => {
     async function getCountries() {
       try {
-        const response = await axios.get("api/getcountries", {
+        const response = await axios.get("/api/getcountries", {
           withCredentials: true,
         });
         const data = response.data;
@@ -23,7 +23,7 @@ const Filters = (props) => {
   useEffect(() => {
     async function getTeams() {
       try {
-        const response = await axios.get("api/getTeams", {
+        const response = await axios.get("/api/getTeams", {
           withCredentials: true,
         });
         const data = response.data;

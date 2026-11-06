@@ -10,10 +10,16 @@ import connectPgSimple from "connect-pg-simple"; //for vercel hosting
 
 const PgSession = connectPgSimple(session);
 
+env.config();
+
 const app = express();
 app.use(express.json());
-// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-env.config();
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 const db = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -347,7 +353,7 @@ app.get(
     failureRedirect: process.env.CLIENT_URL || "http://localhost:5173",
   }),
   (req, res) => {
-    res.redirect(process.env.CLIENT_URL || "http://localhost:5173");
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/home`);
   },
 );
 

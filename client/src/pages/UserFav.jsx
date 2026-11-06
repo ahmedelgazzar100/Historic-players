@@ -14,7 +14,7 @@ export default function UserFav() {
           withCredentials: true,
         });
 
-        const result = await axios.get("api/getfav", {
+        const result = await axios.get("/api/getfav", {
           withCredentials: true,
         });
 

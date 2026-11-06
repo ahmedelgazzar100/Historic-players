@@ -18,7 +18,7 @@ export default function PlayerDetails() {
           withCredentials: true,
         });
 
-        const result = await axios.get("api/getbio", {
+        const result = await axios.get("/api/getbio", {
           params: {
             id: playerId,
           },
@@ -56,7 +56,7 @@ export default function PlayerDetails() {
         console.log(result.data);
         setIsFavorite(true);
       } else {
-        await axios.delete(`api/remove-favorite/${playerId}`, {
+        await axios.delete(`/api/remove-favorite/${playerId}`, {
           withCredentials: true,
         });
         setIsFavorite(false);
