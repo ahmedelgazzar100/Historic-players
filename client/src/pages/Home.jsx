@@ -74,6 +74,9 @@ export default function Home() {
         if (error.response && error.response.status === 401) {
           navigate("/");
         }
+        if (error.response && error.response.status === 404) {
+          navigate("/not-found");
+        }
       }
     }
 

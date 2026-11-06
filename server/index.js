@@ -35,12 +35,23 @@ const db = new pg.Pool({
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static("public")); //مش ضروريه اوي لان احنا فاصلين الفرونت عن الباك ومش شغالين ssd
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.post("/add-player", async (req, res) => {
+  //في البوست مان ببعت معاها في الهدير الكي يبقي كوكي والفاليو connect.sid=وبحط الاسم بتاعها عشان يشوف السيشن
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "غير مسجل الدخول" });
+  }
+  // 2. التأكد إن الإيميل اللي عامل لوجين هو إيميلي الشخصي (الأدمن)
+  const adminEmail = "ahmed.elgazzzar20@gmail.com"; // my email
+  if (req.user.email !== adminEmail) {
+    return res
+      .status(403)
+      .json({ message: "غير مصرح لك بإضافة بيانات، هذه الصلاحية للأدمن فقط" });
+  }
   const { name, position, country, birth_year, img, teams, bio } = req.body;
 
   try {
@@ -88,7 +99,7 @@ app.get("/", async (req, res) => {
   }
   //ترتيب الاوامر في الكيوري مهم بتحط وير اول بعد كدا شروطك كلها بعدين ليميت واوفسيت
   try {
-    const page = parseInt(req.query.page) || 1;
+    let page = parseInt(req.query.page) || 1;
     const { country, club, name } = req.query;
     const position = req.query.position;
     const limit = 10;
@@ -124,16 +135,16 @@ app.get("/", async (req, res) => {
 
     // 2. هنجيب العدد الإجمالي الحقيقي (سواء فيه فلتر أو مفيش) باستخدام COUNT
     const countQuery = `
-      SELECT COUNT(DISTINCT players.id) 
+      SELECT COUNT(DISTINCT players.id)  
       FROM players 
       JOIN player_teams ON players.id = player_teams.player_id 
       JOIN teams ON player_teams.team_id = teams.id 
       ${whereClause}
-    `;
+    `; //distinct عشان ميكررش اللعيبه
     // console.log("Generated Query:", countQuery);
     const countResult = await db.query(countQuery, queryParams);
     // console.log("countResult", countResult);
-    const totalPlayers = parseInt(countResult.rows[0].count); // الرقم الحقيقي (مثلاً 35)
+    const totalPlayers = parseInt(countResult.rows[0].count); // الرقم الحقيقي (مثلاً "35")
     const totalPages = Math.ceil(totalPlayers / limit); // عدد الصفحات الحقيقي
 
     // 3. نجيب لعيبة الصفحة الحالية فقط بالـ LIMIT والـ OFFSET
@@ -143,14 +154,20 @@ app.get("/", async (req, res) => {
       JOIN player_teams ON players.id = player_teams.player_id 
       JOIN teams ON player_teams.team_id = teams.id 
       ${whereClause}
-      ORDER BY players.id ASC 
+      ORDER BY players.id ASC    
       LIMIT $${index} OFFSET $${index + 1}
-    `;
+    `; //مترتبين تصاعدي من الاصغر للاكبر حسب الاي دي
 
     const playersParams = [...queryParams, limit, offset];
     const playersResult = await db.query(playersQuery, playersParams);
 
     // 4. الرد النهائي للفرونت إند
+    if (page > totalPages && totalPages > 0) {
+      return res.status(404).json({ message: "الصفحة غير موجودة" });
+    }
+    if (totalPages === 0) {
+      return res.status(404).json({ message: "الصفحة غير موجودة" });
+    }
     res.json({
       players: playersResult.rows,
       currentPage: page,
@@ -273,7 +290,6 @@ app.get("/getfav", async (req, res) => {
       [req.user.id],
     );
     const result = players.rows;
-    console.log(result);
     res.status(201).json(result);
   } catch (error) {
     console.log(error);

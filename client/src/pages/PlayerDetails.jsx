@@ -29,7 +29,6 @@ export default function PlayerDetails() {
           setIsFavorite(true);
         }
       } catch (error) {
-        console.log(error);
         if (error.response && error.response.status === 401) {
           navigate("/");
         }
