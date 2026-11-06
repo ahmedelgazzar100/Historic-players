@@ -3,7 +3,7 @@ import "../styling/Login.css";
 
 export default function GoogleLogin() {
   const handleGoogleLogin = () => {
-    window.location.href = "/auth/google";
+    window.location.href = "/api/auth/google";
   };
 
   return (
