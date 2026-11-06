@@ -347,7 +347,7 @@ app.get(
     failureRedirect: process.env.CLIENT_URL || "http://localhost:5173",
   }),
   (req, res) => {
-    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/home`);
+    res.redirect(process.env.CLIENT_URL || "http://localhost:5173");
   },
 );
 
