@@ -9,7 +9,7 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/home" element={<h1>HOME TEST WORKS</h1>} />
+        <Route path="/home" element={<Home />} />
         <Route path="/players/:playerId" element={<PlayerDetails />} />
         <Route path="/userfav" element={<UserFav />} />
         <Route path="/not-found" element={<NotFound />} />
