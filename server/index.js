@@ -205,7 +205,6 @@ app.get("/getbio", async (req, res) => {
     return res.status(401).json({ message: "غير مسجل الدخول" });
   }
   const id = parseInt(req.query.id);
-  // console.log(id);
   try {
     const result = await db.query(
       `select   players.*  , ARRAY_AGG (teams.team_name) AS my_teams  
@@ -370,12 +369,12 @@ passport.use(
 
 passport.serializeUser((user, cb) => {
   cb(null, user.id);
-});
+}); //run only with login and saved in cookie.
 
 passport.deserializeUser(async (id, cb) => {
   const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
   cb(null, result.rows[0]);
-});
+}); //run with every request.
 
 app.listen(5000, () => {
   console.log("Server started on port 5000");

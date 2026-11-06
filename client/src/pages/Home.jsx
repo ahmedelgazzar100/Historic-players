@@ -6,6 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import PlayerCard from "../Components/card";
 import Header from "../Components/Header";
 import Pagination from "../Components/Pagination";
+
 export default function Home() {
   const [cards, setCards] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -36,7 +37,7 @@ export default function Home() {
       name: playerName,
     });
   };
-
+  //use search params to make single way of truth and to change the url so u can go forward and back and refresh and save page
   const handleFilter = (filter) => {
     setSearchParams({
       page: 1, // نرجع لأول صفحة مع كل فلتر جديد
@@ -47,48 +48,52 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    async function getPlayers() {
-      try {
-        // 1. نتأكد الأول إن اليوزر مسجل دخول
-        await axios.get("http://localhost:5000/api/check-auth", {
-          withCredentials: true,
-        });
+  useEffect(
+    () => {
+      async function getPlayers() {
+        try {
+          // 1. نتأكد الأول إن اليوزر مسجل دخول
+          await axios.get("http://localhost:5000/api/check-auth", {
+            withCredentials: true,
+          });
 
-        // 2. لو عدى السطر اللي فوق من غير إيرور، معناه إنه مسجل، نجيب اللعيبة عادي
-        const response = await axios.get("http://localhost:5000/", {
-          params: {
-            page: currentPage,
-            name: currentName,
-            club: currentClub,
-            country: currentCountry,
-            position: currentPosition,
-          },
-          withCredentials: true,
-        });
-        setCards(response.data.players);
-        setTotalPages(response.data.totalPages);
-      } catch (error) {
-        console.log("error", error);
-        // 3. لو حصل إيرور بسبب إن اليوزر مش مسجل (401)، اطرده لبرة فوراً
-        if (error.response && error.response.status === 401) {
-          navigate("/");
-        }
-        if (error.response && error.response.status === 404) {
-          navigate("/not-found");
+          // 2. لو عدى السطر اللي فوق من غير إيرور، معناه إنه مسجل، نجيب اللعيبة عادي
+          const response = await axios.get("http://localhost:5000/", {
+            params: {
+              page: currentPage,
+              name: currentName,
+              club: currentClub,
+              country: currentCountry,
+              position: currentPosition,
+            },
+            withCredentials: true, //to tell the browser that i know it differ domain but send this request i told u so he send the cookie with session id
+          });
+
+          setCards(response.data.players);
+          setTotalPages(response.data.totalPages);
+        } catch (error) {
+          // 3. لو حصل إيرور بسبب إن اليوزر مش مسجل (401)، اطرده لبرة فوراً
+          if (error.response && error.response.status === 401) {
+            navigate("/");
+          }
+          //لو حصل ايرور عشان بيطلب حاجه مش موجوده
+          if (error.response && error.response.status === 404) {
+            navigate("/not-found");
+          }
         }
       }
-    }
 
-    getPlayers();
-  }, [
-    currentPage,
-    currentClub,
-    currentCountry,
-    currentPosition,
-    currentName,
-    searchParams,
-  ]);
+      getPlayers();
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      currentPage,
+      currentClub,
+      currentCountry,
+      currentPosition,
+      currentName,
+      searchParams,
+    ],
+  );
 
   function handleClick(playerId) {
     navigate(`/players/${playerId}`);
