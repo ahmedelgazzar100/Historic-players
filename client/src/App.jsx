@@ -9,11 +9,12 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={<h1>HOME TEST WORKS</h1>} />
         <Route path="/players/:playerId" element={<PlayerDetails />} />
         <Route path="/userfav" element={<UserFav />} />
         <Route path="/not-found" element={<NotFound />} />
-        <Route path="*" element={<NotFound />} /> //any route that doesnt exist
+        {/* Any route that doesn't exist */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
