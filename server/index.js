@@ -25,7 +25,7 @@ app.set("trust proxy", 1);
 
 app.use(
   session({
-    store: new PgSession({ pool: db, store: new PgSession({ pool: db }) }),
+    store: new PgSession({ pool: db }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -43,6 +43,13 @@ app.use(express.static("public")); //مش ضروريه اوي لان احنا ف
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use((req, res, next) => {
+  if (req.url.startsWith("/api")) {
+    req.url = req.url.slice(4) || "/";
+  }
+  next();
+});
 
 app.post("/add-player", async (req, res) => {
   //في البوست مان ببعت معاها في الهدير الكي يبقي كوكي والفاليو connect.sid=وبحط الاسم بتاعها عشان يشوف السيشن
