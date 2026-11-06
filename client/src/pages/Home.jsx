@@ -73,11 +73,15 @@ export default function Home() {
           setTotalPages(response.data.totalPages);
         } catch (error) {
           // 3. لو حصل إيرور بسبب إن اليوزر مش مسجل (401)، اطرده لبرة فوراً
-          if (error.response && error.response.status === 401) {
+          console.log("ERROR:", error);
+          console.log("STATUS:", error.response?.status);
+          console.log("DATA:", error.response?.data);
+
+          if (error.response?.status === 401) {
             navigate("/");
           }
-          //لو حصل ايرور عشان بيطلب حاجه مش موجوده
-          if (error.response && error.response.status === 404) {
+
+          if (error.response?.status === 404) {
             navigate("/not-found");
           }
         }
@@ -101,9 +105,12 @@ export default function Home() {
   }
   const handleLogout = async () => {
     try {
-      const response = await axios.post("/api/logout", {
-        withCredentials: true,
-      });
+      const response = await axios.post(
+        //axios (url ,data,conf)
+        "/api/logout",
+        {},
+        { withCredentials: true },
+      );
 
       console.log(response.data.message);
 
