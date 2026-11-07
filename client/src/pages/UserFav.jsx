@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlayerCard from "../Components/card";
 import "../styling/PlayerCard.css";
+import "../styling/player.css";
 export default function UserFav() {
   const navigate = useNavigate();
   const [favPlayers, setFavPlayers] = useState([]);
+  const [data, setData] = useState(false);
   useEffect(() => {
     async function getFav() {
       try {
@@ -19,7 +21,7 @@ export default function UserFav() {
         });
 
         const players = result.data;
-
+        setData(true);
         setFavPlayers(players);
       } catch (error) {
         if (error.response && error.response.status === 401) {
@@ -33,6 +35,10 @@ export default function UserFav() {
   function handleClick(playerId) {
     console.log(playerId);
     navigate(`/players/${playerId}`);
+  }
+
+  if (!data) {
+    return <div className="loading-text">Loading Your Fav Players data...</div>;
   }
 
   return (

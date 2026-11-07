@@ -78,7 +78,7 @@ export default function PlayerDetails() {
           <p className="player-country">📍 {player.country}</p>
           <p className="player-age">🎂 {player.birth_year} Years Old</p>
           <div className="player-positions">
-            {player.position.map((pos, index) => (
+            {player.position?.map((pos, index) => (
               <span key={index} className="position-badge">
                 {pos}
               </span>
