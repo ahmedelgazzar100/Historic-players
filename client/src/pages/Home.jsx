@@ -6,8 +6,10 @@ import { useSearchParams } from "react-router-dom";
 import PlayerCard from "../Components/card";
 import Header from "../Components/Header";
 import Pagination from "../Components/Pagination";
+import "../styling/player.css";
 
 export default function Home() {
+  const [data, setData] = useState(false);
   const [cards, setCards] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -71,6 +73,7 @@ export default function Home() {
 
           setCards(response.data.players);
           setTotalPages(response.data.totalPages);
+          setData(true);
         } catch (error) {
           // 3. لو حصل إيرور بسبب إن اليوزر مش مسجل (401)، اطرده لبرة فوراً
           console.log("ERROR:", error);
@@ -122,6 +125,10 @@ export default function Home() {
 
   function onFav() {
     navigate("/userfav");
+  }
+
+  if (!data) {
+    return <div className="loading-text">Loading Legends</div>;
   }
 
   return (
